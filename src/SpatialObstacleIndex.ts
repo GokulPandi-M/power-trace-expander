@@ -99,6 +99,7 @@ export class SpatialObstacleIndex {
       this.defaultViaHoleDiameter,
     );
     this.connectionNameResolver = connectionNameResolver;
+    connectionNameResolver.setCacheableObstacles(simpleRouteJson.obstacles);
     // Rectangles approximating one copper object share its alias array.
     // Resolve that array once per index, including large copper-pour aliases.
     const canonicalNamesByAliases = new Map<

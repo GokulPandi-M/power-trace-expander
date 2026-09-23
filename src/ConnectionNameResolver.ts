@@ -31,9 +31,12 @@ const getPositionLayerAlias = (
  */
 export class ConnectionNameResolver {
   private readonly parent = new Map<string, string>();
-  private readonly canonicalSetsByAliases = new WeakMap<
+  // Retain only aliases from the most recently indexed obstacle collection.
+  // Cloned boards and transient trace arrays cannot accumulate across rebuilds.
+  private cachedObstacles: SimpleRouteJson["obstacles"] | undefined;
+  private readonly canonicalSetsByAliases = new Map<
     string[],
-    { aliases: string[]; canonicalNames: ReadonlySet<string> }
+    { aliases: string[]; canonicalNames: ReadonlySet<string> } | null
   >();
 
   constructor(
@@ -93,6 +96,16 @@ export class ConnectionNameResolver {
           : obstacle.connectedTo,
       );
     }
+    this.setCacheableObstacles(simpleRouteJson.obstacles);
+  }
+
+  setCacheableObstacles(obstacles: SimpleRouteJson["obstacles"]): void {
+    if (this.cachedObstacles === obstacles) return;
+    this.cachedObstacles = obstacles;
+    this.canonicalSetsByAliases.clear();
+    for (const obstacle of obstacles) {
+      this.canonicalSetsByAliases.set(obstacle.connectedTo, null);
+    }
   }
 
   canonicalize(names: string[]) {
@@ -112,10 +125,12 @@ export class ConnectionNameResolver {
     // Net unions finish in the constructor. Later lookups can only add
     // isolated names, so existing roots remain valid for this resolver.
     const canonicalNames = new Set(this.canonicalize(names));
-    this.canonicalSetsByAliases.set(names, {
-      aliases: [...names],
-      canonicalNames,
-    });
+    if (this.canonicalSetsByAliases.has(names)) {
+      this.canonicalSetsByAliases.set(names, {
+        aliases: [...names],
+        canonicalNames,
+      });
+    }
     return canonicalNames;
   }
 
