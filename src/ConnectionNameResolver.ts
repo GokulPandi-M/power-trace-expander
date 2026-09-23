@@ -31,6 +31,10 @@ const getPositionLayerAlias = (
  */
 export class ConnectionNameResolver {
   private readonly parent = new Map<string, string>();
+  private readonly canonicalSetsByAliases = new WeakMap<
+    string[],
+    { aliases: string[]; canonicalNames: ReadonlySet<string> }
+  >();
 
   constructor(
     simpleRouteJson: SimpleRouteJson,
@@ -93,6 +97,26 @@ export class ConnectionNameResolver {
 
   canonicalize(names: string[]) {
     return [...new Set(names.map((name) => this.find(name)))];
+  }
+
+  /** Reuse static copper aliases across spatial-index rebuilds. */
+  canonicalizeToSet(names: string[]): ReadonlySet<string> {
+    const cached = this.canonicalSetsByAliases.get(names);
+    if (
+      cached &&
+      names.length === cached.aliases.length &&
+      names.every((name, index) => name === cached.aliases[index])
+    ) {
+      return cached.canonicalNames;
+    }
+    // Net unions finish in the constructor. Later lookups can only add
+    // isolated names, so existing roots remain valid for this resolver.
+    const canonicalNames = new Set(this.canonicalize(names));
+    this.canonicalSetsByAliases.set(names, {
+      aliases: [...names],
+      canonicalNames,
+    });
+    return canonicalNames;
   }
 
   private unionAll(names: string[]) {
