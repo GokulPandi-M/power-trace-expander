@@ -36,6 +36,7 @@ const getBoardLayers = (layerCount: number) => [
 export class SpatialObstacleIndex {
   readonly items: IndexedObstacle[];
   readonly clearance: number;
+  readonly minTraceToHoleEdgeClearance?: number;
   readonly boardEdgeClearance: number;
   readonly boardLayers: string[];
   readonly minViaHoleEdgeToViaHoleEdgeClearance: number;
@@ -60,6 +61,7 @@ export class SpatialObstacleIndex {
     ),
   ) {
     this.bounds = simpleRouteJson.bounds;
+    this.minTraceToHoleEdgeClearance = simpleRouteJson.minTraceToHoleEdgeClearance;
     this.boardLayers = getBoardLayers(simpleRouteJson.layerCount);
     this.dynamicTraceIndex = dynamicTraceIndex;
     this.clearance = Math.max(
@@ -82,6 +84,7 @@ export class SpatialObstacleIndex {
         approximateObstacleWithRects(obstacle).map((item) => ({
           ...item,
           copperObjectId: `obstacle:${obstacleIndex}`,
+          isHole: obstacle.isHole,
         })),
       ),
       ...this.createTraceItems(simpleRouteJson.fixedTraces ?? [], true),
@@ -523,6 +526,7 @@ export class SpatialObstacleIndex {
     const violations = new Set<string>();
     for (const layer of query.layers) {
       const collisionQuery: CollisionQuery = {
+        isVia: true,
         start: query.point,
         end: query.point,
         layer,
@@ -665,6 +669,7 @@ export class SpatialObstacleIndex {
   private getCollisionCandidates(query: CollisionQuery) {
     const maximumClearance = Math.max(
       this.clearance,
+      this.minTraceToHoleEdgeClearance ?? 0,
       query.obstacleClearance ?? this.clearance,
       query.sameNetObstacleClearance ?? 0,
     );
@@ -733,8 +738,9 @@ export class SpatialObstacleIndex {
     ) {
       return false;
     }
-    const itemClearance =
-      item.kind === "obstacle" && item.obstacleKind === "pad"
+    const itemClearance = item.isHole && !query.isVia
+      ? this.minTraceToHoleEdgeClearance ?? this.clearance
+      : item.kind === "obstacle" && item.obstacleKind === "pad"
         ? isSameNet && query.blockSameNetObstacles
           ? (query.sameNetObstacleClearance ??
             query.obstacleClearance ??

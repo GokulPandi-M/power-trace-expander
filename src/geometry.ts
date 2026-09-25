@@ -204,6 +204,21 @@ export function approximateObstacleWithRects(
   obstacle: Obstacle,
   maxCellSize = 0.6,
 ): IndexedObstacle[] {
+  if (obstacle.shape === "circle") {
+    const radius = obstacle.width / 2;
+    return [{
+      minX: obstacle.center.x - radius,
+      minY: obstacle.center.y - radius,
+      maxX: obstacle.center.x + radius,
+      maxY: obstacle.center.y + radius,
+      layers: obstacle.layers,
+      kind: "obstacle",
+      obstacleKind: "other",
+      isHole: obstacle.isHole,
+      connectionNames: obstacle.connectedTo,
+      exactShape: { type: "circle", center: obstacle.center, radius },
+    }];
+  }
   const rotation = ((obstacle.ccwRotationDegrees ?? 0) * Math.PI) / 180;
   const columns = Math.max(1, Math.ceil(obstacle.width / maxCellSize));
   const rows = Math.max(1, Math.ceil(obstacle.height / maxCellSize));
