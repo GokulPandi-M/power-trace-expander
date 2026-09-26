@@ -68,7 +68,7 @@ export type SimpleRouteConnection = {
 
 export type Obstacle = {
   obstacleId?: string;
-  isHole?: boolean;
+  isNonPlatedHole?: boolean;
   shape?: "circle";
   componentId?: string;
   /** SRJ `oval` obstacles are ellipses; circular pads have equal dimensions. */

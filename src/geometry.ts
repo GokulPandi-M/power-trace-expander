@@ -204,7 +204,7 @@ export function approximateObstacleWithRects(
   obstacle: Obstacle,
   maxCellSize = 0.6,
 ): IndexedObstacle[] {
-  if (obstacle.isHole && obstacle.shape === "circle") {
+  if (obstacle.isNonPlatedHole && obstacle.shape === "circle") {
     const radius = obstacle.width / 2;
     return [
       {
@@ -249,7 +249,7 @@ export function approximateObstacleWithRects(
         maxY: Math.max(...corners.map((point) => point.y)),
         layers: obstacle.layers,
         kind: "obstacle",
-        obstacleKind: obstacle.isHole
+        obstacleKind: obstacle.isNonPlatedHole
           ? "hole"
           : obstacle.connectedTo[0]?.startsWith("pcb_via_")
             ? "via"

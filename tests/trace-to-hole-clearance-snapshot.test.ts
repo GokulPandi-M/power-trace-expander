@@ -17,7 +17,7 @@ const input: SimpleRouteJson = {
   bounds: { minX: -4, maxX: 4, minY: -3, maxY: 3 },
   obstacles: [-1.5, 1.5].map((y) => ({
     type: "rect",
-    isHole: true,
+    isNonPlatedHole: true,
     shape: "circle",
     center: { x: 0, y },
     width: 2,

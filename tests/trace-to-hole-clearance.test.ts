@@ -17,7 +17,7 @@ test("trace-to-hole clearance selects the hole margin without changing pad or vi
         obstacles: [
           {
             type: "rect",
-            isHole: true,
+            isNonPlatedHole: true,
             shape,
             center: { x: 0, y: 0 },
             width: 2,
@@ -61,7 +61,7 @@ test("trace-to-hole clearance selects the hole margin without changing pad or vi
       viaQuery.point.y -= 0.002;
       expect(index.collidesVia(viaQuery)).toBe(true);
       expect(JSON.stringify(srj)).toBe(before);
-      srj.obstacles[0]!.isHole = false;
+      srj.obstacles[0]!.isNonPlatedHole = false;
       srj.obstacles[0]!.connectedTo = ["pcb_smtpad_pad"];
       const padIndex = new SpatialObstacleIndex(srj, []);
       for (const delta of [-0.001, 0.001]) {
