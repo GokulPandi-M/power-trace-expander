@@ -154,8 +154,7 @@ export type IndexedObstacle = {
   maxY: number;
   layers: string[];
   kind: "obstacle" | "trace" | "via";
-  obstacleKind?: "pad" | "via" | "other";
-  isHole?: boolean;
+  obstacleKind?: "pad" | "via" | "hole" | "other";
   connectionNames: string[];
   /** Stable identity for all indexed chunks from one copper object. */
   copperObjectId?: string;
@@ -170,6 +169,7 @@ export type IndexedObstacle = {
 };
 
 export type CollisionQuery = {
+  /** Via copper retains its existing spacing when checking a trace-only rule. */
   isVia?: boolean;
   start: Point;
   end: Point;
