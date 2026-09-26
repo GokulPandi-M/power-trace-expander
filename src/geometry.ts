@@ -204,7 +204,7 @@ export function approximateObstacleWithRects(
   obstacle: Obstacle,
   maxCellSize = 0.6,
 ): IndexedObstacle[] {
-  if (obstacle.shape === "circle") {
+  if (obstacle.isHole && obstacle.shape === "circle") {
     const radius = obstacle.width / 2;
     return [{
       minX: obstacle.center.x - radius,
