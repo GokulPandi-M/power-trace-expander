@@ -36,7 +36,7 @@ const getBoardLayers = (layerCount: number) => [
 export class SpatialObstacleIndex {
   readonly items: IndexedObstacle[];
   readonly clearance: number;
-  readonly holeClearance: number;
+  readonly nonPlatedHoleClearance: number;
   readonly boardEdgeClearance: number;
   readonly boardLayers: string[];
   readonly minViaHoleEdgeToViaHoleEdgeClearance: number;
@@ -68,7 +68,7 @@ export class SpatialObstacleIndex {
       simpleRouteJson.minTraceToPadEdgeClearance ?? 0,
       0.1,
     );
-    this.holeClearance =
+    this.nonPlatedHoleClearance =
       simpleRouteJson.minTraceToHoleEdgeClearance ?? this.clearance;
     this.boardEdgeClearance =
       simpleRouteJson.minBoardEdgeClearance ?? this.clearance;
@@ -669,7 +669,7 @@ export class SpatialObstacleIndex {
   private getCollisionCandidates(query: CollisionQuery) {
     const maximumClearance = Math.max(
       this.clearance,
-      this.holeClearance,
+      this.nonPlatedHoleClearance,
       query.obstacleClearance ?? this.clearance,
       query.sameNetObstacleClearance ?? 0,
     );
@@ -740,7 +740,7 @@ export class SpatialObstacleIndex {
     }
     const itemClearance =
       item.kind === "obstacle" && item.obstacleKind === "hole" && !query.isVia
-        ? this.holeClearance
+        ? this.nonPlatedHoleClearance
         : item.kind === "obstacle" && item.obstacleKind === "pad"
           ? isSameNet && query.blockSameNetObstacles
             ? (query.sameNetObstacleClearance ??
