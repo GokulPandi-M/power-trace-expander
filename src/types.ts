@@ -68,6 +68,8 @@ export type SimpleRouteConnection = {
 
 export type Obstacle = {
   obstacleId?: string;
+  isNonPlatedHole?: boolean;
+  shape?: "circle";
   componentId?: string;
   /** SRJ `oval` obstacles are ellipses; circular pads have equal dimensions. */
   type: "rect" | "oval";
@@ -94,6 +96,7 @@ export type SimpleRouteJson = {
   min_via_pad_diameter?: number;
   defaultObstacleMargin?: number;
   minTraceToPadEdgeClearance?: number;
+  minTraceToHoleEdgeClearance?: number;
   minBoardEdgeClearance?: number;
   minViaHoleEdgeToViaHoleEdgeClearance?: number;
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
@@ -151,7 +154,7 @@ export type IndexedObstacle = {
   maxY: number;
   layers: string[];
   kind: "obstacle" | "trace" | "via";
-  obstacleKind?: "pad" | "via" | "other";
+  obstacleKind?: "pad" | "via" | "hole" | "other";
   connectionNames: string[];
   /** Stable identity for all indexed chunks from one copper object. */
   copperObjectId?: string;
@@ -166,6 +169,8 @@ export type IndexedObstacle = {
 };
 
 export type CollisionQuery = {
+  /** Via copper retains its existing spacing when checking a trace-only rule. */
+  isVia?: boolean;
   start: Point;
   end: Point;
   layer: string;

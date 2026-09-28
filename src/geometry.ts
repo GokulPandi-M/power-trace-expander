@@ -204,6 +204,22 @@ export function approximateObstacleWithRects(
   obstacle: Obstacle,
   maxCellSize = 0.6,
 ): IndexedObstacle[] {
+  if (obstacle.isNonPlatedHole && obstacle.shape === "circle") {
+    const radius = obstacle.width / 2;
+    return [
+      {
+        minX: obstacle.center.x - radius,
+        minY: obstacle.center.y - radius,
+        maxX: obstacle.center.x + radius,
+        maxY: obstacle.center.y + radius,
+        layers: obstacle.layers,
+        kind: "obstacle",
+        obstacleKind: "hole",
+        connectionNames: obstacle.connectedTo,
+        exactShape: { type: "circle", center: obstacle.center, radius },
+      },
+    ];
+  }
   const rotation = ((obstacle.ccwRotationDegrees ?? 0) * Math.PI) / 180;
   const columns = Math.max(1, Math.ceil(obstacle.width / maxCellSize));
   const rows = Math.max(1, Math.ceil(obstacle.height / maxCellSize));
@@ -233,12 +249,14 @@ export function approximateObstacleWithRects(
         maxY: Math.max(...corners.map((point) => point.y)),
         layers: obstacle.layers,
         kind: "obstacle",
-        obstacleKind: obstacle.connectedTo[0]?.startsWith("pcb_via_")
-          ? "via"
-          : obstacle.connectedTo[0]?.startsWith("pcb_smtpad_") ||
-              obstacle.connectedTo[0]?.startsWith("pcb_plated_hole_")
-            ? "pad"
-            : "other",
+        obstacleKind: obstacle.isNonPlatedHole
+          ? "hole"
+          : obstacle.connectedTo[0]?.startsWith("pcb_via_")
+            ? "via"
+            : obstacle.connectedTo[0]?.startsWith("pcb_smtpad_") ||
+                obstacle.connectedTo[0]?.startsWith("pcb_plated_hole_")
+              ? "pad"
+              : "other",
         connectionNames: obstacle.connectedTo,
         exactShape: { type: "polygon", points: corners },
       });
