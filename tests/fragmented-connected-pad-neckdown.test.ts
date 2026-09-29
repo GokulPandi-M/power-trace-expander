@@ -43,33 +43,36 @@ const drawFragmentedPadTrace = ({
   trace: SimplifiedPcbTrace;
   outputMinimumWidth?: number;
 }): GraphicsObject => {
-  const terminalViewMaximumX = 0.8;
-  const visibleTraceLines = trace.route.slice(1).flatMap((end, routeIndex) => {
-    const start = trace.route[routeIndex];
-    if (
-      start?.route_type !== "wire" ||
-      end.route_type !== "wire" ||
-      start.x >= terminalViewMaximumX
-    ) {
-      return [];
-    }
-    const visibleEnd = {
-      ...end,
-      x: Math.min(end.x, terminalViewMaximumX),
-    };
-    const belowMinimum = start.width < problem.minTraceWidth;
-    return [
-      {
-        points: [start, visibleEnd],
-        strokeWidth: start.width,
-        strokeColor: belowMinimum
-          ? "#dc2626"
-          : outputMinimumWidth
-            ? "rgba(124, 58, 237, 0.22)"
-            : "#2563eb",
-      },
-    ];
-  });
+  const terminalViewMaximumX = 0.3;
+  const terminalTraceStart = trace.route[0];
+  const terminalTraceEnd = trace.route[1];
+  const terminalTraceRects =
+    terminalTraceStart?.route_type === "wire" &&
+    terminalTraceEnd?.route_type === "wire"
+      ? [
+          {
+            center: {
+              x:
+                (terminalTraceStart.x +
+                  Math.min(terminalTraceEnd.x, terminalViewMaximumX)) /
+                2,
+              y: terminalTraceStart.y,
+            },
+            width:
+              Math.min(terminalTraceEnd.x, terminalViewMaximumX) -
+              terminalTraceStart.x,
+            height: terminalTraceStart.width,
+            fill:
+              terminalTraceStart.width < problem.minTraceWidth
+                ? "#dc2626"
+                : "#2563eb",
+            stroke:
+              terminalTraceStart.width < problem.minTraceWidth
+                ? "#991b1b"
+                : "#1d4ed8",
+          },
+        ]
+      : [];
   const fragmentedPadObstacles = problem.obstacles.filter((obstacle) =>
     obstacle.connectedTo.includes(FRAGMENTED_PAD_ID),
   );
@@ -78,93 +81,97 @@ const drawFragmentedPadTrace = ({
     coordinateSystem: "cartesian",
     rects: [
       {
-        center: { x: 0.2, y: 0 },
-        width: 1.4,
+        center: { x: 0, y: 0 },
+        width: 0.9,
         height: 1,
         fill: "transparent",
         stroke: "#cbd5e1",
       },
-      ...fragmentedPadObstacles.map((obstacle) => ({
+      ...fragmentedPadObstacles.map((obstacle, fragmentIndex) => ({
         center: obstacle.center,
         width: obstacle.width,
         height: obstacle.height,
-        fill: "rgba(59, 130, 246, 0.20)",
-        stroke: "#2563eb",
+        fill:
+          fragmentIndex === 1
+            ? "rgba(203, 213, 225, 0.85)"
+            : "rgba(226, 232, 240, 0.85)",
+        stroke: "#64748b",
       })),
       {
         center: { x: 0, y: 0 },
         width: 0.6,
         height: 0.3,
         fill: "transparent",
-        stroke: "#1e3a8a",
+        stroke: "#334155",
       },
+      ...terminalTraceRects,
     ],
     lines: [
-      ...(outputMinimumWidth
-        ? [
-            {
-              points: [
-                { x: 0, y: 0.01 },
-                { x: 0.3, y: 0.01 },
-              ],
-              strokeWidth: problem.minTraceWidth,
-              strokeColor: "rgba(37, 99, 235, 0.22)",
-            },
-          ]
-        : []),
-      ...visibleTraceLines,
+      {
+        points: [
+          { x: -0.3, y: -0.05 },
+          { x: 0.3, y: -0.05 },
+        ],
+        strokeWidth: 0.008,
+        strokeColor: "#64748b",
+      },
+      {
+        points: [
+          { x: -0.3, y: 0.05 },
+          { x: 0.3, y: 0.05 },
+        ],
+        strokeWidth: 0.008,
+        strokeColor: "#64748b",
+      },
     ],
-    circles: outputMinimumWidth
-      ? [
-          {
-            center: { x: 0, y: 0.01 },
-            radius: problem.minTraceWidth / 2,
-            fill: "transparent",
-            stroke: "#1d4ed8",
-          },
-          {
-            center: { x: 0, y: 0.01 },
-            radius: outputMinimumWidth / 2,
-            fill: "#dc2626",
-            stroke: "#991b1b",
-          },
-        ]
-      : [],
+    circles: [
+      {
+        center: { x: 0, y: 0.01 },
+        radius: 0.012,
+        fill: "#0f172a",
+        stroke: "#0f172a",
+      },
+    ],
     texts: [
       {
-        x: 0.2,
-        y: 0.4,
-        text: "SAME PHYSICAL PAD • 3 CONNECTED RECTANGLES",
-        fontSize: 0.075,
-        color: "#1e3a8a",
+        x: 0,
+        y: 0.42,
+        text: outputMinimumWidth
+          ? "CURRENT BUGGY OUTPUT"
+          : "EXPECTED TERMINAL SEGMENT",
+        fontSize: 0.065,
+        color: "#0f172a",
+      },
+      {
+        x: 0,
+        y: 0.31,
+        text: "ALL 3 ROWS = ONE PHYSICAL PAD",
+        fontSize: 0.05,
+        color: "#334155",
+      },
+      {
+        x: 0,
+        y: 0.19,
+        text: "TERMINAL",
+        fontSize: 0.035,
+        color: "#0f172a",
       },
       ...fragmentedPadObstacles.map((obstacle, fragmentIndex) => ({
-        x: -0.24,
+        x: -0.23,
         y: obstacle.center.y,
-        text: `${fragmentIndex + 1}`,
-        fontSize: 0.05,
-        color: "#1e3a8a",
+        text: `fragment ${fragmentIndex + 1}`,
+        fontSize: 0.035,
+        color: "#334155",
       })),
       {
-        x: 0.2,
+        x: 0,
         y: -0.34,
         text: outputMinimumWidth
-          ? `BLUE = ${problem.minTraceWidth.toFixed(4)} mm REQUIRED MINIMUM`
-          : `INPUT TRACE = ${problem.minTraceWidth.toFixed(4)} mm`,
-        fontSize: 0.07,
-        color: "#1d4ed8",
+          ? `RED OUTPUT: ${outputMinimumWidth.toFixed(4)} mm < ${problem.minTraceWidth.toFixed(4)} mm MINIMUM`
+          : `BLUE INPUT: ${problem.minTraceWidth.toFixed(4)} mm FITS`,
+        fontSize: 0.055,
+        color: outputMinimumWidth ? "#991b1b" : "#1d4ed8",
       },
-      ...(outputMinimumWidth
-        ? [
-            {
-              x: 0.2,
-              y: -0.43,
-              text: `RED = ${outputMinimumWidth.toFixed(4)} mm EMITTED SEGMENT`,
-              fontSize: 0.07,
-              color: "#991b1b",
-            },
-          ]
-        : []),
     ],
   };
 };
@@ -224,22 +231,17 @@ test("reproduces a sub-minimum terminal neckdown on a fragmented connected pad",
   expect(materialBelowMinimumSegments[0]!.length).toBeGreaterThan(0.29);
 
   const svg = getSvgFromGraphicsObject(
-    stackGraphicsHorizontally(
-      [
-        drawFragmentedPadTrace({
-          problem: fragmentedPadInput,
-          trace: inputTrace,
-        }),
-        drawFragmentedPadTrace({
-          problem: fragmentedPadInput,
-          trace: outputTrace,
-          outputMinimumWidth: minimumOutputWidth,
-        }),
-      ],
-      {
-        titles: ["BEFORE — 0.1500 mm INPUT", "AFTER — 0.0800 mm OUTPUT"],
-      },
-    ),
+    stackGraphicsHorizontally([
+      drawFragmentedPadTrace({
+        problem: fragmentedPadInput,
+        trace: inputTrace,
+      }),
+      drawFragmentedPadTrace({
+        problem: fragmentedPadInput,
+        trace: outputTrace,
+        outputMinimumWidth: minimumOutputWidth,
+      }),
+    ]),
     { backgroundColor: "white", svgWidth: 1400, svgHeight: 460 },
   );
   await expect(svg).toMatchSvgSnapshot(import.meta.path);
