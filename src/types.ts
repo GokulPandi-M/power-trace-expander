@@ -93,6 +93,7 @@ export type SimpleRouteJson = {
   min_via_pad_diameter?: number;
   defaultObstacleMargin?: number;
   minTraceToPadEdgeClearance?: number;
+  minPadEdgeToPadEdgeClearance?: number;
   minBoardEdgeClearance?: number;
   minViaHoleEdgeToViaHoleEdgeClearance?: number;
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
@@ -159,6 +160,8 @@ export type IndexedObstacle = {
 };
 
 export type CollisionQuery = {
+  /** Via copper uses the board pad-edge rule against other vias. */
+  isVia?: boolean;
   start: Point;
   end: Point;
   layer: string;
