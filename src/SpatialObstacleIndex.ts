@@ -35,6 +35,7 @@ export class SpatialObstacleIndex {
   readonly items: IndexedObstacle[];
   readonly clearance: number;
   readonly minPadEdgeToPadEdgeClearance: number;
+  readonly holeClearance: number;
   readonly boardEdgeClearance: number;
   readonly boardLayers: string[];
   readonly minViaHoleEdgeToViaHoleEdgeClearance: number;
@@ -65,6 +66,8 @@ export class SpatialObstacleIndex {
       simpleRouteJson.minTraceToPadEdgeClearance ?? 0,
       0.1,
     );
+    this.holeClearance =
+      simpleRouteJson.minTraceToHoleEdgeClearance ?? this.clearance;
     this.minPadEdgeToPadEdgeClearance =
       simpleRouteJson.minPadEdgeToPadEdgeClearance ?? this.clearance;
     this.boardEdgeClearance =
@@ -544,6 +547,7 @@ export class SpatialObstacleIndex {
   private getCollisionCandidates(query: CollisionQuery) {
     const maximumClearance = Math.max(
       this.clearance,
+      this.holeClearance,
       query.isVia ? this.minPadEdgeToPadEdgeClearance : 0,
       query.obstacleClearance ?? this.clearance,
       query.sameNetObstacleClearance ?? 0,
@@ -618,13 +622,17 @@ export class SpatialObstacleIndex {
       (item.kind === "via" ||
         (item.kind === "obstacle" && item.obstacleKind === "via"))
         ? this.minPadEdgeToPadEdgeClearance
-        : item.kind === "obstacle" && item.obstacleKind === "pad"
-          ? isSameNet && query.blockSameNetObstacles
-            ? (query.sameNetObstacleClearance ??
-              query.obstacleClearance ??
-              this.clearance)
-            : (query.obstacleClearance ?? this.clearance)
-          : this.clearance;
+        : item.kind === "obstacle" &&
+            item.obstacleKind === "hole" &&
+            !query.isVia
+          ? this.holeClearance
+          : item.kind === "obstacle" && item.obstacleKind === "pad"
+            ? isSameNet && query.blockSameNetObstacles
+              ? (query.sameNetObstacleClearance ??
+                query.obstacleClearance ??
+                this.clearance)
+              : (query.obstacleClearance ?? this.clearance)
+            : this.clearance;
     const itemRadius = query.width / 2 + itemClearance;
     if (item.exactShape?.type === "segment") {
       return (
