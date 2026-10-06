@@ -68,6 +68,8 @@ export type SimpleRouteConnection = {
 
 export type Obstacle = {
   obstacleId?: string;
+  isNonPlatedHole?: boolean;
+  shape?: "circle";
   componentId?: string;
   type: "rect";
   layers: string[];
@@ -94,6 +96,7 @@ export type SimpleRouteJson = {
   defaultObstacleMargin?: number;
   minTraceToPadEdgeClearance?: number;
   minPadEdgeToPadEdgeClearance?: number;
+  minTraceToHoleEdgeClearance?: number;
   minBoardEdgeClearance?: number;
   minViaHoleEdgeToViaHoleEdgeClearance?: number;
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
@@ -147,7 +150,7 @@ export type IndexedObstacle = {
   maxY: number;
   layers: string[];
   kind: "obstacle" | "trace" | "via";
-  obstacleKind?: "pad" | "via" | "other";
+  obstacleKind?: "pad" | "via" | "hole" | "other";
   connectionNames: string[];
   traceIndex?: number;
   routeStartIndex?: number;
@@ -160,7 +163,7 @@ export type IndexedObstacle = {
 };
 
 export type CollisionQuery = {
-  /** Via copper uses the board pad-edge rule against other vias. */
+  /** Via copper retains its existing spacing when checking a trace-only rule. */
   isVia?: boolean;
   start: Point;
   end: Point;
