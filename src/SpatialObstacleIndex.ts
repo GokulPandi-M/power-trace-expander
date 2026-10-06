@@ -747,7 +747,9 @@ export class SpatialObstacleIndex {
       (item.kind === "via" ||
         (item.kind === "obstacle" && item.obstacleKind === "via"))
         ? this.minPadEdgeToPadEdgeClearance
-        : item.kind === "obstacle" && item.obstacleKind === "hole" && !query.isVia
+        : item.kind === "obstacle" &&
+            item.obstacleKind === "hole" &&
+            !query.isVia
           ? this.holeClearance
           : item.kind === "obstacle" && item.obstacleKind === "pad"
             ? isSameNet && query.blockSameNetObstacles
