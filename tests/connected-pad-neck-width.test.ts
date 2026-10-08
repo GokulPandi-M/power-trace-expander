@@ -147,6 +147,48 @@ test("measures adjacent fragments with one pad id as one copper region", () => {
   });
 });
 
+test("keeps separate pads distinct when their aliases share one net", () => {
+  const sharedConnectedTo = ["pcb_smtpad_lower", "pcb_smtpad_upper", "POWER"];
+  const input = {
+    layerCount: 2,
+    minTraceWidth: 0.15,
+    bounds: { minX: -1, minY: -1, maxX: 1, maxY: 1 },
+    connections: [],
+    obstacles: [
+      {
+        type: "rect" as const,
+        center: { x: 0, y: -0.05 },
+        width: 0.6,
+        height: 0.1,
+        layers: ["top"],
+        connectedTo: sharedConnectedTo,
+        circuitJsonMetadata: { pcb_smtpad_id: "pcb_smtpad_lower" },
+      },
+      {
+        type: "rect" as const,
+        center: { x: 0, y: 0.05 },
+        width: 0.6,
+        height: 0.1,
+        layers: ["top"],
+        connectedTo: sharedConnectedTo,
+        circuitJsonMetadata: { pcb_smtpad_id: "pcb_smtpad_upper" },
+      },
+    ],
+  } satisfies PowerTraceExpanderInput;
+  const query = {
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 0 },
+    layer: "top",
+    width: 0.15,
+    connectionNames: ["POWER"],
+  };
+  const obstacleIndex = new SpatialObstacleIndex(input, []);
+
+  expect(
+    obstacleIndex.getConnectedPadEndpointWidthLimitAtPoint(query, query.start),
+  ).toBeCloseTo(0, 9);
+});
+
 test("keeps a neckdown when the complete fragmented pad is narrow", () => {
   const input = createFragmentedConnectedPadNeckdownProblem();
   const padFragments = input.obstacles.filter((obstacle) =>

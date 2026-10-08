@@ -19,6 +19,7 @@ import type {
 } from "./types";
 
 type PhysicalPadId = string & { readonly __physicalPadId: unique symbol };
+type PhysicalPadKey = PhysicalPadId | Obstacle;
 type LayerName = string;
 
 type ConnectedPad = {
@@ -115,7 +116,7 @@ export class SpatialObstacleIndex {
       (item) =>
         new Set(connectionNameResolver.canonicalize(item.connectionNames)),
     );
-    const obstaclesByPhysicalPadId = new Map<PhysicalPadId, Obstacle[]>();
+    const obstaclesByPhysicalPadId = new Map<PhysicalPadKey, Obstacle[]>();
     for (const obstacle of simpleRouteJson.obstacles) {
       const physicalPadIds = obstacle.connectedTo
         .filter(
@@ -125,10 +126,18 @@ export class SpatialObstacleIndex {
         )
         .sort();
       if (physicalPadIds.length === 0) continue;
-      const physicalPadId = physicalPadIds.join("|") as PhysicalPadId;
-      const padObstacles = obstaclesByPhysicalPadId.get(physicalPadId) ?? [];
+      const metadataPhysicalPadId =
+        obstacle.circuitJsonMetadata?.pcb_smtpad_id ??
+        obstacle.circuitJsonMetadata?.pcb_plated_hole_id;
+      const physicalPadId =
+        metadataPhysicalPadId ??
+        (physicalPadIds.length === 1 ? physicalPadIds[0] : undefined);
+      const physicalPadKey: PhysicalPadKey = physicalPadId
+        ? (physicalPadId as PhysicalPadId)
+        : obstacle;
+      const padObstacles = obstaclesByPhysicalPadId.get(physicalPadKey) ?? [];
       padObstacles.push(obstacle);
-      obstaclesByPhysicalPadId.set(physicalPadId, padObstacles);
+      obstaclesByPhysicalPadId.set(physicalPadKey, padObstacles);
     }
     this.connectedPads = [...obstaclesByPhysicalPadId.values()].map(
       (obstacles, index) => {
